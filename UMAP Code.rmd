@@ -1,0 +1,12 @@
+#UMAP for feature visualization
+from sklearn.feature_extraction.text import TfidfVectorizer
+from yellowbrick.text import UMAPVisualizer
+
+tfidf = TfidfVectorizer()
+docs = tfidf.fit_transform(df1)
+labels = df1["REF"]
+
+# Instantiate the text visualizer
+umap = UMAPVisualizer()
+umap.fit(docs, labels)
+umap.show()
