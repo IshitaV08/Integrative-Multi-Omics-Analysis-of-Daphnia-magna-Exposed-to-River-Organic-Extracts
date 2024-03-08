@@ -1,0 +1,42 @@
+### t-test and p-val plots ###
+
+### t-test ###
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import ttest_ind
+
+# Perform independent samples t-test
+t_statistic, p_value = ttest_ind(pos_1x_desc_rem,pos_10x_desc_rem)
+
+print("t-statistic:", t_statistic)
+print("p-value:", p_value)
+
+# Plotting the p-values
+plt.figure(figsize=(8, 6))
+plt.scatter(range(len(p_value)), p_value, color='skyblue')
+plt.xlabel('Peaks')
+plt.ylabel('p-value')
+plt.title('p-values from t-tests')
+plt.show()
+
+### ANOVA Plots ###
+from scipy.stats import f_oneway
+
+# Perform one-way ANOVA
+f_statistic, p_values = f_oneway(pos_control_desc_rem, pos_1x_desc_rem, pos_10x_desc_rem)
+
+# Print the results
+print("F-statistic:", f_statistic)
+print("p-values:", p_values)
+
+# Plotting the p-values
+plt.figure(figsize=(8, 6))
+plt.scatter(range(len(p_values)), p_values, color='orange')
+plt.xlabel('Peaks')
+plt.ylabel('p-values')
+plt.title('p-values from ANOVA')
+plt.show()
+
+
+## Try adjusting the p-values, or group by location.
