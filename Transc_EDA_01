@@ -1,0 +1,92 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+# Load the data
+df = pd.read_csv('rna_norm_counts.csv', na_values='?')
+
+# Dataset Overview
+df.head() # preview a sample
+
+df.shape  # number of observations and features
+# (32561, 15)
+
+df.dtypes # data types
+#age                int64
+#workclass         object
+#fnlwgt             int64
+#education         object
+# (...)
+
+df[df.duplicated()] # check duplicated rows
+
+df.isna().sum() # missing values per feature
+#age                  0
+#workclass         1836
+#fnlwgt               0
+# (...)
+
+df.isna().sum().sum() # number of missing cells
+ 
+round(df.isna().sum().sum() / df.size * 100, 1) # percentage of missing cells
+
+df.info()
+
+df.describe()
+
+df = df.iloc[:, 1:]
+correlation_matrix = df.corr()
+
+# Plot the heatmap using seaborn
+plt.figure(figsize=(10, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
+plt.title('Correlation Heatmap')
+plt.show()
+
+# Identify outliers using IQR
+Q1 = df.quantile(0.25)
+Q3 = df.quantile(0.75)
+IQR = Q3 - Q1
+
+# Define a threshold to identify outliers
+outlier_threshold = 1.5
+
+# Filter out the rows with outliers
+outliers = ((df < (Q1 - outlier_threshold * IQR)) | (df > (Q3 + outlier_threshold * IQR))).any(axis=1)
+df_no_outliers = df[~outliers]
+
+# Visualize the outliers using a boxplot
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=df)
+plt.title('Boxplot of the Entire DataFrame')
+plt.show()
+
+# Visualize the DataFrame without outliers
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=df_no_outliers)
+plt.title('Boxplot of the DataFrame without Outliers')
+plt.show()
+# Standardize the features
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(df)
+
+# Apply PCA
+pca = PCA(n_components=2)  # Choose the number of components you want to keep
+principal_components = pca.fit_transform(X_scaled)
+
+# Create a DataFrame with the principal components
+pc_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
+
+# Visualize the explained variance ratio
+explained_var_ratio = pca.explained_variance_ratio_
+print(f"Explained Variance Ratio: PC1 = {explained_var_ratio[0]:.2f}, PC2 = {explained_var_ratio[1]:.2f}")
+
+# Plot the 2D scatter plot of the principal components
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='PC1', y='PC2', data=pc_df)
+plt.title('2D Scatter Plot of Principal Components')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.show()
