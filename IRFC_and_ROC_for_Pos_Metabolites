@@ -1,0 +1,198 @@
+## Iterative Random Forest for REF ##
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+X = pos_data
+y = pos_target_REF_Encoded
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize the RandomForestClassifier
+rf_clf = RandomForestClassifier(n_estimators=90, random_state=42)
+
+# Iterate over the number of trees to be added
+n_iterations = 10
+for i in range(n_iterations):
+    # Fit the model with additional trees
+    rf_clf.n_estimators += 10
+    rf_clf.fit(X_train, y_train)
+    
+    # Predict on the test set
+    y_pred = rf_clf.predict(X_test)
+    
+    # Evaluate the model
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Iteration {i+1}: Added 10 trees, Test Accuracy: {accuracy:.4f}")
+
+### ROC for REF ###
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_curve, auc
+import numpy as np
+import matplotlib.pyplot as plt
+
+X = pos_data
+y = pos_target_REF_Encoded
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize variables to accumulate predicted probabilities
+fprs = []
+tprs = []
+aucs = []
+
+# Initialize the RandomForestClassifier
+rf_clf = RandomForestClassifier(n_estimators=10, random_state=42)
+
+# Iterate over the number of trees to be added
+n_iterations = 10
+for i in range(n_iterations):
+    # Fit the model with additional trees
+    rf_clf.n_estimators += 10
+    rf_clf.fit(X_train, y_train)
+    
+    # Get predicted probabilities
+    y_scores = rf_clf.predict_proba(X_test)[:, 1]
+    
+    # Compute ROC curve and ROC area
+    fpr, tpr, _ = roc_curve(y_test, y_scores)
+    roc_auc = auc(fpr, tpr)
+    
+    # Append to lists
+    fprs.append(fpr)
+    tprs.append(tpr)
+    aucs.append(roc_auc)
+
+# Plot ROC curves for each iteration
+plt.figure()
+for i in range(n_iterations):
+    plt.plot(fprs[i], tprs[i], lw=2, label=f'ROC curve (iteration {i+1}) (area = %0.2f)' % aucs[i])
+
+# Plot the diagonal line (random classifier)
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+
+# Set plot attributes
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC)')
+plt.legend(loc='lower right')
+plt.show()
+
+### IRFC for Sites ###
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+X = pos_data
+y = pos_target_Site_Encoded
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize the RandomForestClassifier
+rf_clf = RandomForestClassifier(n_estimators=50, random_state=42)
+
+# Iterate over the number of trees to be added
+n_iterations = 10
+for i in range(n_iterations):
+    # Fit the model with additional trees
+    rf_clf.n_estimators += 10
+    rf_clf.fit(X_train, y_train)
+    
+    # Predict on the test set
+    y_pred = rf_clf.predict(X_test)
+    
+    # Evaluate the model
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Iteration {i+1}: Added 10 trees, Test Accuracy: {accuracy:.4f}")
+
+### Best Hyperparameters using Grid Search ###
+
+from sklearn.model_selection import GridSearchCV
+
+X = pos_data
+y = pos_target_Site_Encoded
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Define the hyperparameters to tune
+param_grid = {
+    'n_estimators': [50, 100, 150],
+    'max_depth': [None, 10, 20],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
+
+# Initialize the GridSearchCV object
+grid_search = GridSearchCV(estimator=RandomForestClassifier(random_state=42),
+                           param_grid=param_grid,
+                           cv=5,  # 5-fold cross-validation
+                           scoring='accuracy',
+                           n_jobs=-1)
+
+# Perform the grid search
+grid_search.fit(X_train, y_train)
+
+# Get the best hyperparameters
+best_params = grid_search.best_params_
+print("Best Hyperparameters:", best_params)
+
+# Use the best model for prediction
+best_rf_clf = grid_search.best_estimator_
+y_pred = best_rf_clf.predict(X_test)
+
+# Evaluate the best model
+accuracy = accuracy_score(y_test, y_pred)
+print("Test Accuracy:", accuracy)
+
+### ROC for Sites ### 
+
+
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_curve, auc
+import matplotlib.pyplot as plt
+
+X = pos_data
+y = pos_target_Site_Encoded
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize the RandomForestClassifier
+rf_clf = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Fit the model
+rf_clf.fit(X_train, y_train)
+
+# Get predicted probabilities
+y_scores = rf_clf.predict_proba(X_test)
+
+# Compute ROC curve and ROC area for each class
+plt.figure()
+for i in range(len(rf_clf.classes_)):
+    fpr, tpr, _ = roc_curve(y_test == rf_clf.classes_[i], y_scores[:, i])
+    roc_auc = auc(fpr, tpr)
+    plt.plot(fpr, tpr, lw=2, label=f'ROC curve (class {i}) (area = %0.2f)' % roc_auc)
+
+# Plot the diagonal line (random classifier)
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+
+# Set plot attributes
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC)')
+plt.legend(loc='lower right')
+plt.show()
