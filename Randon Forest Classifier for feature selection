@@ -1,0 +1,56 @@
+# Randon Forest Classifier for feature selection
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import make_classification
+import numpy as np
+
+# Generate sample data (replace with your actual data)
+X = treatment_1x_edit.drop(columns = ['Site', 'Site_encoded'])
+y = treatment_1x_edit['Site_encoded']
+
+# Step 2: Instantiate the Random Forest Classifier
+rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Step 3: Fit the Model
+rf_classifier.fit(X, y)
+
+# Step 4: Feature Importance
+feature_importances = rf_classifier.feature_importances_
+
+# Step 5: Select Features
+# Select top k features based on importance scores
+# Assuming X is your feature matrix and is a pandas DataFrame
+feature_names = X.columns
+
+# Step 5: Select Features
+# Select top k features based on importance scores
+k = 20
+top_k_indices = np.argsort(feature_importances)[::-1][:k]
+selected_features = [feature_names[i] for i in top_k_indices]
+
+print("Selected Features:")
+for feature in selected_features:
+    print(feature)
+
+# Step 5: Create Feature Importance Matrix
+feature_names = [f'Feature {i+1}' for i in range(X.shape[1])]
+importance_matrix = pd.DataFrame({'Feature': feature_names, 'Importance': feature_importances})
+
+print("Feature Importance Matrix:")
+print(importance_matrix)
+
+import matplotlib.pyplot as plt
+
+# Assuming importance_matrix is your DataFrame containing feature importances
+# Replace this with your actual DataFrame if necessary
+
+# Sort the importance matrix by importance score in descending order
+importance_matrix_sorted = importance_matrix.sort_values(by='Importance', ascending=False)
+
+# Plotting
+plt.figure(figsize=(10, 6))
+plt.barh(importance_matrix_sorted['Feature'], importance_matrix_sorted['Importance'], color='skyblue')
+plt.xlabel('Importance Score')
+plt.ylabel('Feature')
+plt.title('Feature Importances')
+plt.gca().invert_yaxis()  # Invert y-axis to have the most important features at the top
+plt.show()
