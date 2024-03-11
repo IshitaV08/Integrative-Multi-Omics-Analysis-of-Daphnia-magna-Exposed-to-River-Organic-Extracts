@@ -1,0 +1,15 @@
+#Check for missing samples in sample_sheet and transcriptome or metabolome data
+import pandas as pd
+
+# Extract the column you're interested in (replace 'column_name' with the actual column name)
+column_name = 'SampleID'
+df1_column_values = set(sample_sheet[column_name].unique())
+df2_column_values = set(metabolic_merged_sheet[column_name].unique())
+
+# Find unique values in each dataset
+unique_to_df1 = df1_column_values - df2_column_values
+unique_to_df2 = df2_column_values - df1_column_values
+
+# Display the unique values
+print("Unique values only in df1:", unique_to_df1)
+print("Unique values only in df2:", unique_to_df2)
