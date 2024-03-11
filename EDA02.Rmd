@@ -1,0 +1,87 @@
+---
+title: "M05_Transcriptomic_EDA"
+output: html_notebook
+---
+
+```{r}
+setwd("/rds/homes/n/nxs365/M5_group8/")
+```
+
+```{r}
+# Load transcriptome data (replace 'transcriptome_data.csv' with your actual file)
+transcriptome_data <- read.csv('rna_norm_counts.csv', row.names = 1)
+```
+
+```{r}
+str(transcriptome_data)
+```
+
+
+```{r}
+# Assuming your data frame is 'transcriptome_data'
+# Rename the first column to 'gene_ids'
+colnames(transcriptome_data)[1] <- "gene_ids"
+
+# Verify the changes
+head(transcriptome_data)
+```
+```{r}
+# Boxplot to visualize data distribution across samples
+boxplot(transcriptome_data[, -1], main = "Boxplot of Normalized Read Counts", xlab = "Samples", ylab = "Normalized Read Counts")
+
+```
+
+```{r}
+# Heatmap for sample-to-sample variation
+heatmap(as.matrix(transcriptome_data[, -1]), main = "Heatmap of Normalized Read Counts")
+```
+
+```{r}
+# Calculate Z-scores for each gene across samples
+z_scores <- scale(transcriptome_data[, -1])
+
+# Identify and remove samples with outliers
+outliers <- apply(abs(z_scores) > 3, 1, any)
+cleaned_data <- transcriptome_data[!outliers, ]
+
+```
+
+```{r}
+# Perform PCA
+pca_result <- prcomp(cleaned_data[, -1])
+
+# Define colors for the groups
+group_colors <- c(rep("black", 6), rep("red", 72), rep("blue", 72))
+
+# Plot PCA with smaller dot sizes
+plot(pca_result$x[, 1], pca_result$x[, 2], col = group_colors,
+     main = "PCA Plot of Transcriptomic Data", xlab = "PC1", ylab = "PC2", cex = 0.7)
+
+# Add legend
+legend("topright", legend = c("Control", "1x", "10x"), col = c("black", "red", "blue"), pch = 1)
+
+```
+```{r}
+### we can create histogram later to compare multiple samples ###\
+
+# Histogram of normalized read counts for a specific gene (replace 'GeneName' with your gene of interest)
+hist(transcriptome_data$CK07, main = "Histogram of Normalized Read Counts", xlab = "Normalized Read Counts")
+
+```
+
+```{r}
+# Calculate correlation matrix
+cor_matrix <- cor(cleaned_data[, -1])
+
+# Plot correlation heatmap
+heatmap(cor_matrix, main = "Correlation Heatmap of Transcriptomic Data")
+
+```
+```{r}
+# Assuming your data frame is 'transcriptome_data' and read lengths are in a column named 'ReadLength'
+read_lengths <- transcriptome_data$ReadLength
+
+# Plot read length distribution
+hist(read_lengths, main = "Read Length Distribution", xlab = "Read Length", col = "lightgreen")
+```
+
