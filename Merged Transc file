@@ -1,0 +1,16 @@
+import pandas as pd
+
+# Load transcriptomic data (rna_norm_counts.csv) and transpose it
+rna_norm_counts_path = 'rna_norm_counts.csv'  # Replace with the actual path
+rna_data = pd.read_csv(rna_norm_counts_path, index_col=0).transpose()
+
+# Load sample sheet data
+sample_sheet_path = 'sample_sheet.csv'  # Replace with the actual path
+sample_sheet = pd.read_csv(sample_sheet_path)
+
+# Merge data based on sample names
+merged_data = pd.merge(sample_sheet, rna_data, left_on='SampleID', right_index=True)
+
+# Display the resulting DataFrame
+print(merged_data)
+merged_data.to_csv('merged_data.csv', index=False)
