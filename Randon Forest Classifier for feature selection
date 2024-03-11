@@ -50,6 +50,15 @@ importance_matrix_sorted = importance_matrix.sort_values(by='Importance', ascend
 plt.figure(figsize=(10, 6))
 plt.barh(importance_matrix_sorted['Feature'], importance_matrix_sorted['Importance'], color='skyblue')
 plt.xlabel('Importance Score')
+
+# Filter features with importance greater than 0
+important_features = importance_matrix[importance_matrix['Importance'] > 0.005]
+
+# Get the number of features with importance greater than 0
+num_features_greater_than_zero = len(important_features)
+
+print("Number of features with importance greater than 0:", num_features_greater_than_zero)
+
 plt.ylabel('Feature')
 plt.title('Feature Importances')
 plt.gca().invert_yaxis()  # Invert y-axis to have the most important features at the top
