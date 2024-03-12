@@ -1,0 +1,20 @@
+# Important Features csv
+# Get the column indices of important features
+important_feature_indices = important_features_ref.index.tolist()
+
+# Create new data by filtering out non-important features using column indices
+new_data1 = metabolic_merged_sheet.iloc[:, important_feature_indices]
+new_data1 ['SampleID'] = metabolic_merged_sheet['SampleID']
+new_data1 ['REF'] = metabolic_merged_sheet['REF']
+new_data1 ['Site'] = metabolic_merged_sheet['Site']
+new_data1 ['Description'] = metabolic_merged_sheet['Description']
+
+
+
+# Print the shape of the new data
+print("Shape of new data after filtering non-important features:", new_data1.shape)
+
+# Export new data to a CSV file
+new_data1.to_csv('important_features_data_ref.csv', index=False)
+
+new_data1
