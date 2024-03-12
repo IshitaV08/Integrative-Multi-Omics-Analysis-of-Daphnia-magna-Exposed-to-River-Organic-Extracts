@@ -1,4 +1,6 @@
-#  Remember read in the file of rna counts into rna_norm_counts!!!!!!!!
+#  Remember to read in the file of rna counts into rna_norm_counts!!!!!!!!
+
+data <- read.csv("your_file.tsv", sep = "\t")
 
 control <- rna_norm_counts[,2:7]
 rownames(control) <- rna_norm_counts[,1]
@@ -35,3 +37,4 @@ dif_ec <- DEG_ec %>% mutate(change = case_when( # Adding a new column, and namin
 ))
 
 sig_genes <- rownames(dif_ec[dif_ec$adj.P.Val < 0.05, ])
+
