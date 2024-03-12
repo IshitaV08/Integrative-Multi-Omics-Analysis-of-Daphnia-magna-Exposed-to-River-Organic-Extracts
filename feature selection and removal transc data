@@ -1,0 +1,95 @@
+# Generate sample data
+X1 = transcriptomic_merged_sheet_encoded.drop(columns=['REF_encoded','Site_encoded', 'SampleID'])
+y1 = transcriptomic_merged_sheet_encoded['REF_encoded']
+
+from sklearn.model_selection import train_test_split
+
+# Generate sample data
+X1 = transcriptomic_merged_sheet_encoded.drop(columns=['REF_encoded','Site_encoded', 'SampleID'])
+y1 = transcriptomic_merged_sheet_encoded['REF_encoded']
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X1, y1, test_size=0.2, random_state=42)
+
+from sklearn.preprocessing import StandardScaler
+
+# Scale the features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Train logistic regression with scaled data
+logistic_regression = LogisticRegression(max_iter=1000)
+logistic_regression.fit(X_train_scaled, y_train)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X1, y1, test_size=0.2, random_state=42)
+
+# Prepare the classifiers
+classifiers = {
+    "Logistic Regression": LogisticRegression(),
+    "Random Forest": RandomForestClassifier(random_state=42),
+    "Gradient Boosting": GradientBoostingClassifier(random_state=42),
+    "Support Vector Machine": SVC(probability=True, random_state=42)
+}
+
+# Train and evaluate the classifiers
+results = {}
+for name, clf in classifiers.items():
+    # Train the classifier
+    clf.fit(X_train, y_train)
+
+    # Predict on the test set
+    y_pred = clf.predict(X_test)
+    y_proba = clf.predict_proba(X_test)[:, 1]
+    
+    # Evaluate the classifier
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, average='weighted')  # For multiclass classification
+    recall = recall_score(y_test, y_pred, average='weighted')  # For multiclass classification
+    f1 = f1_score(y_test, y_pred, average='weighted')  # For multiclass classification
+    roc_auc = roc_auc_score(y_test, y_proba, average='weighted')  # For multiclass classification
+    cv_scores = cross_val_score(clf, X_train, y_train, cv=5)
+
+    # Store results
+    results[name] = {
+        "Accuracy": accuracy,
+        "Precision": precision,
+        "Recall": recall,
+        "F1 Score": f1,
+        "ROC-AUC Score": roc_auc,
+        "Cross-validation scores": cv_scores.tolist(),  # Convert to list for printing
+    }
+
+ # Print the performance
+    print(f"Results for {name}:")
+    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
+    print(f"ROC-AUC Score: {roc_auc:.4f}\n")
+    print(f"Cross-validation scores: {cv_scores}\n")
+
+# Compare results
+results_df = pd.DataFrame(results).transpose()
+print("Comparison of Classifiers:")
+print(results_df)
+
+# Train the classifier
+clf = RandomForestClassifier(random_state=42)
+clf.fit(X_train, y_train)  # Replace X_train and y_train with your actual training data
+
+feature_importance = clf.feature_importances_
+important_features = X_train.columns[np.argsort(feature_importance)[::-1]]
+
+print("Most Important Feature:", important_features[0])
+
+# Exclude the best feature and retrain the classifier
+X_train_subset = X_train.drop(important_features[0], axis=1)
+X_test_subset = X_test.drop(important_features[0], axis=1)
+
+clf_subset = RandomForestClassifier(random_state=42)
+clf_subset.fit(X_train_subset, y_train)  # Replace X_train_subset and y_train with your actual data
+
+y_pred_test_subset = clf_subset.predict(X_test_subset)
+print("Test Accuracy (Excluding Best Feature):", accuracy_score(y_test, y_pred_test_subset))  # Replace y_test with your actual test data
