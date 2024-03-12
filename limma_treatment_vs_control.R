@@ -38,4 +38,4 @@ dif_ec <- DEG_ec %>% mutate(change = case_when( # Adding a new column, and namin
 
 sig_genes <- rownames(dif_ec[dif_ec$adj.P.Val < 0.05, ])
 
-write.csv(dif_ec, "differential_treatment_vs_control.csv", row.names = TRUE)
+write.csv(dif_ec, "/your_own_directory/differential_treatment_vs_control.csv", row.names = TRUE)
