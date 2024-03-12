@@ -1,0 +1,9 @@
+# Label Encoding
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+metabolic_merged_sheet_encoded = metabolic_merged_sheet.copy()
+metabolic_merged_sheet_encoded['Site' + '_encoded'] = le.fit_transform(metabolic_merged_sheet_encoded['Site'])
+metabolic_merged_sheet_encoded['REF' + '_encoded'] = le.fit_transform(metabolic_merged_sheet_encoded['REF'])
+metabolic_merged_sheet_encoded = metabolic_merged_sheet_encoded.drop(columns = ['REF', 'Site', 'Description'])
+
+metabolic_merged_sheet_encoded
