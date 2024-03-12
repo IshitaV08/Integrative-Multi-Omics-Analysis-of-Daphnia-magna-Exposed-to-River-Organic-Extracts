@@ -1,0 +1,154 @@
+import pandas as pd
+import seaborn as sns
+import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import SimpleImputer, IterativeImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
+from sklearn.model_selection import cross_val_score
+from scipy import stats
+from sklearn.cluster import AgglomerativeClustering
+from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from sklearn.cluster import KMeans
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+!pip install missingno
+import missingno as msno
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Load sample information
+sample_sheet = pd.read_csv("sample_sheet.csv")
+
+# Load transcriptomic data (replace 'rna_norm_counts.csv' with your actual file)
+rna_data = pd.read_csv("rna_norm_counts.csv", index_col=0)
+# Transpose the 'rna_data' DataFrame
+rna_data_transposed = rna_data.T
+
+# Merge data based on sample names
+merged_data = pd.merge(sample_sheet, rna_data_transposed, left_on="SampleID", right_index=True)
+# Print the column names in merged_data
+print(merged_data.columns)
+
+# Load transcriptomic data (rna_norm_counts.csv) and transpose it
+rna_norm_counts_path = 'rna_norm_counts.csv'  # Replace with the actual path
+rna_data = pd.read_csv(rna_norm_counts_path, index_col=0).transpose()
+
+# Load sample sheet data
+sample_sheet_path = 'sample_sheet.csv'  # Replace with the actual path
+sample_sheet = pd.read_csv(sample_sheet_path)
+
+# Merge data based on sample names
+merged_data = pd.merge(sample_sheet, rna_data, left_on='SampleID', right_index=True)
+
+# Display the resulting DataFrame
+print(merged_data)
+merged_data.to_csv('merged_data.csv', index=False)
+
+# Label Encoding
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+transcriptomic_merged_sheet_encoded = merged_data.copy()
+transcriptomic_merged_sheet_encoded['Site' + '_encoded'] = le.fit_transform(transcriptomic_merged_sheet_encoded['Site'])
+transcriptomic_merged_sheet_encoded['REF' + '_encoded'] = le.fit_transform(transcriptomic_merged_sheet_encoded['REF'])
+transcriptomic_merged_sheet_encoded = transcriptomic_merged_sheet_encoded.drop(columns=['REF', 'Site', 'Description'])
+
+transcriptomic_merged_sheet_encoded
+
+df1 = pd.read_csv ('merged_data.csv')
+print(df1.info())
+
+# Number of samples
+num_rows = len(df1)
+print(num_rows)
+
+# Identify the number of missing values
+missing_values = df1.isnull().sum()
+print(missing_values)
+
+correlation_matrix = df1.corr(numeric_only=True)
+
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+plt.title('Correlation Matrix')
+
+plt.show()
+
+correlation_matrix = df1.corr(numeric_only=True)
+
+def mask_heatmap(matrix):
+    mask = np.zeros_like(matrix, dtype=bool)
+    mask[np.triu_indices_from(mask)] = True
+    return mask
+
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5, mask=mask_heatmap(correlation_matrix))
+plt.title('Correlation Matrix')
+plt.show()
+
+----------
+
+# Generate sample data
+X1 = transcriptomic_merged_sheet_encoded.drop(columns=['REF_encoded','Site_encoded', 'SampleID'])
+y1 = transcriptomic_merged_sheet_encoded['REF_encoded']
+
+from sklearn.model_selection import train_test_split
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X1, y1, test_size=0.2, random_state=42)
+
+# Prepare the classifiers
+classifiers = {
+    "Logistic Regression": LogisticRegression(),
+    "Random Forest": RandomForestClassifier(random_state=42),
+    "Gradient Boosting": GradientBoostingClassifier(random_state=42),
+    "Support Vector Machine": SVC(probability=True, random_state=42)
+}
+
+# Train and evaluate the classifiers
+results = {}
+for name, clf in classifiers.items():
+    # Train the classifier
+    clf.fit(X_train, y_train)
+
+    # Predict on the test set
+    y_pred = clf.predict(X_test)
+    y_proba = clf.predict_proba(X_test)[:, 1]
+
+    # Evaluate the classifier
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, average='weighted')  # For multiclass classification
+    recall = recall_score(y_test, y_pred, average='weighted')  # For multiclass classification
+    f1 = f1_score(y_test, y_pred, average='weighted')  # For multiclass classification
+    roc_auc = roc_auc_score(y_test, y_proba, average='weighted')  # For multiclass classification
+    cv_scores = cross_val_score(clf, X_train, y_train, cv=5)
+
+    # Store results
+    results[name] = {
+        "Accuracy": accuracy,
+        "Precision": precision,
+        "Recall": recall,
+        "F1 Score": f1,
+        "ROC-AUC Score": roc_auc,
+        "Cross-validation scores": cv_scores.tolist(),  # Convert to list for printing
+    }
+
+ # Print the performance
+    print(f"Results for {name}:")
+    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
+    print(f"ROC-AUC Score: {roc_auc:.4f}\n")
+    print(f"Cross-validation scores: {cv_scores}\n")
+
+# Compare results
+results_df = pd.DataFrame(results).transpose()
+print("Comparison of Classifiers:")
+print(results_df)
