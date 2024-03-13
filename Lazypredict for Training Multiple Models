@@ -1,0 +1,24 @@
+### lazypredictor for training and comoparing the accuracy of differnt models ###
+
+## import ##
+import lazypredict
+
+### The Algorithm ###
+
+### Import Libraries ###
+from lazypredict.Supervised import LazyClassifier
+from sklearn.model_selection import train_test_split
+
+### Set the raw data in X and the target column (encoded) in the y variable ###
+X_REF_pred = pos_data
+y_REF_pred = pos_target_REF_Encoded
+
+### Test-train split ###
+X_train_REF_pred, X_test_REF_pred, y_train_REF_pred, y_test_REF_pred = train_test_split(X_REF_pred, y_REF_pred,test_size=0.2,random_state =42)
+
+### Initialising the classifier ###
+clf_REF = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
+models_REF,predictions_REF = clf_REF.fit(X_train_REF_pred, X_test_REF_pred, y_train_REF_pred, y_test_REF_pred)
+
+print(models_REF)
+print(predictions_REF)
