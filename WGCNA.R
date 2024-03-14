@@ -1,5 +1,5 @@
-rna_norm_counts <- read.csv("/rds/homes/t/txj322/00000M5_Group/raw/rna_norm_counts.csv")
-sample_sheet <- read.csv("/rds/homes/t/txj322/00000M5_Group/raw/sample_sheet.csv")
+rna_norm_counts <- read.csv("/your own directory/rna_norm_counts.csv")
+sample_sheet <- read.csv("/your own directory/sample_sheet.csv")
 
 fpkm_raw <- rna_norm_counts
 
