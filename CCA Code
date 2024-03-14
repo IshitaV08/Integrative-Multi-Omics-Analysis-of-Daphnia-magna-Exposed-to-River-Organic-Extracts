@@ -1,0 +1,48 @@
+from sklearn.cross_decomposition import CCA
+from sklearn.model_selection import train_test_split
+
+# Assuming you have already performed over-sampling and have the oversampled datasets: oversampled_X_metabolic, oversampled_X_transcriptome
+
+# Split the oversampled data into training and test sets
+X_metabolic_train, X_metabolic_test, X_transcrip_train, X_transcrip_test = train_test_split(metabolic_oversampled_df, transcriptome_imp_feature_encode, test_size=0.2, random_state=42)
+
+# Initialize CCA
+cca = CCA(n_components=2)  # You can specify the number of canonical components you want to retain
+
+# Fit CCA to the training data
+cca.fit(X_metabolic_train, X_transcrip_train)
+
+# Transform the training data using the learned CCA model
+X_metabolic_canonical_train, X_transcrip_canonical_train = cca.transform(X_metabolic_train, X_transcrip_train)
+
+# Transform the test data using the learned CCA model
+X_metabolic_canonical_test, X_transcrip_canonical_test = cca.transform(X_metabolic_test, X_transcrip_test)
+
+# Now, X_metabolic_canonical_train, X_transcriptome_canonical_train, X_metabolic_canonical_test, and X_transcriptome_canonical_test
+# contain the canonical variates obtained from CCA for training and test data
+# You can use these for further analysis or visualization to explore the relationship between metabolic and transcriptome data
+
+
+import matplotlib.pyplot as plt
+
+# Plot canonical variates for training data
+plt.figure(figsize=(10, 5))
+plt.scatter(X_metabolic_canonical_train[:, 0], X_transcrip_canonical_train[:, 0], label='Canonical Variate 1', c='blue', alpha=0.5)
+plt.scatter(X_metabolic_canonical_train[:, 1], X_transcrip_canonical_train[:, 1], label='Canonical Variate 2', c='red', alpha=0.5)
+plt.title('Canonical Variates for Training Data')
+plt.xlabel('Metabolic Data')
+plt.ylabel('Transcriptome Data')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Plot canonical variates for test data
+plt.figure(figsize=(10, 5))
+plt.scatter(X_metabolic_canonical_test[:, 0], X_transcrip_canonical_test[:, 0], label='Canonical Variate 1', c='blue', alpha=0.5)
+plt.scatter(X_metabolic_canonical_test[:, 1], X_transcrip_canonical_test[:, 1], label='Canonical Variate 2', c='red', alpha=0.5)
+plt.title('Canonical Variates for Test Data')
+plt.xlabel('Metabolic Data')
+plt.ylabel('Transcriptome Data')
+plt.legend()
+plt.grid(True)
+plt.show()
