@@ -1,6 +1,6 @@
 #  Remember to read in the file of rna counts into rna_norm_counts!!!!!!!!
 
-rna_norm_counts <- read.csv("/your_directory/rna_norm_counts.tsv", sep = "\t")
+rna_norm_counts <- read.csv("/your_directory/rna_norm_counts.csv")
 
 control <- rna_norm_counts[,2:7]
 rownames(control) <- rna_norm_counts[,1]
