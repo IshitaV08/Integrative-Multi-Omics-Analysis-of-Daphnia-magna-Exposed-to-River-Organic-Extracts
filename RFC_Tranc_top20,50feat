@@ -1,0 +1,154 @@
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+import numpy as np
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_curve, auc
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
+
+
+# Generate sample data (replace with your actual data)
+X1 = metabolic_merged_sheet_encoded.drop(columns = ['SampleID', 'REF_encoded', 'Site_encoded'])
+y1 = metabolic_merged_sheet_encoded['REF_encoded']
+
+
+X1_train, X1_test, y1_train, y1_test = train_test_split (X1,y1, test_size = 0.2, random_state = 42)
+# Step 2: Instantiate the Random Forest Classifier
+rf_clf = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# Step 3: Fit the Model
+rf_clf.fit(X1, y1)
+
+# Iterate over the number of trees to be added
+n_iterations = 10
+for i in range(n_iterations):
+    # Fit the model with additional trees
+    rf_clf.n_estimators += 10
+    rf_clf.fit(X1_train, y1_train)
+    
+    # Predict on the test set
+    y1_pred = rf_clf.predict(X1_test)
+    
+    # Evaluate the model
+    accuracy = accuracy_score(y1_test, y1_pred)
+    print(f"Iteration {i+1}: Added 10 trees, Test Accuracy: {accuracy:.4f}")
+
+# Initialize variables to accumulate predicted probabilities
+fprs1 = []
+tprs1 = []
+aucs1 = []
+
+# Initialize the RandomForestClassifier
+rf_clf = RandomForestClassifier(n_estimators=10, random_state=42)
+
+# Iterate over the number of trees to be added
+n_iterations = 10
+for i in range(n_iterations):
+    # Fit the model with additional trees
+    rf_clf.n_estimators += 10
+    rf_clf.fit(X1_train, y1_train)
+    
+    # Get predicted probabilities
+    y1_scores = rf_clf.predict_proba(X1_test)[:, 1]
+    
+    # Compute ROC curve and ROC area
+    fpr1, tpr1, _ = roc_curve(y1_test, y1_scores)
+    roc_auc1 = auc(fpr1, tpr1)
+    
+    # Append to lists
+    fprs1.append(fpr1)
+    tprs1.append(tpr1)
+    aucs1.append(roc_auc1)
+
+# Plot ROC curves for each iteration
+plt.figure()
+for i in range(n_iterations):
+    plt.plot(fprs1[i], tprs1[i], lw=2, label=f'ROC curve (iteration {i+1}) (area = %0.2f)' % aucs1[i])
+
+# Plot the diagonal line (random classifier)
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+
+# Set plot attributes
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC)')
+plt.legend(loc='lower right')
+plt.show()
+
+
+# Step 4: Feature Importance
+feature_importances = rf_clf.feature_importances_
+
+# Step 5: Select Features
+# Select top k features based on importance scores
+# Assuming X is your feature matrix and is a pandas DataFrame
+feature_names_ref = X1.columns
+
+# Step 5: Select Features
+# Select top k features based on importance scores
+k = 20
+top_k_indices = np.argsort(feature_importances)[::-1][:k]
+selected_features_ref = [feature_names_ref[i] for i in top_k_indices]
+
+print("Selected Features:")
+for feature in selected_features_ref:
+    print(feature)
+
+# Step 5: Create Feature Importance Matrix
+feature_names_ref = [f'Feature {i+1}' for i in range(X1.shape[1])]
+importance_matrix_ref = pd.DataFrame({'Feature': feature_names_ref, 'Importance': feature_importances})
+
+print("Feature Importance Matrix:")
+print(importance_matrix_ref)
+
+
+import matplotlib.pyplot as plt
+
+# Assuming importance_matrix is your DataFrame containing feature importances
+# Replace this with your actual DataFrame if necessary
+
+# Sort the importance matrix by importance score in descending order
+importance_matrix_sorted_ref = importance_matrix_ref.sort_values(by='Importance', ascending=False)
+
+# Plotting
+plt.figure(figsize=(10, 6))
+plt.barh(importance_matrix_sorted_ref['Feature'], importance_matrix_sorted_ref['Importance'], color='pink')
+plt.xlabel('Importance Score')
+plt.ylabel('Feature')
+plt.title('Feature Importances')
+plt.gca().invert_yaxis()  # Invert y-axis to have the most important features at the top
+plt.show()
+
+
+# Filter features with importance greater than 0
+important_features_ref = importance_matrix_ref[importance_matrix_ref['Importance'] > 0]
+
+# Get the number of features with importance greater than 0
+num_features_greater_than_zero1 = len(important_features_ref)
+
+print("Number of features with importance greater than 0:", num_features_greater_than_zero1)
+
+
+# Get the column indices of important features
+important_feature_indices = important_features_ref.index.tolist()
+
+# Create new data by filtering out non-important features using column indices
+new_data1 = metabolic_merged_sheet.iloc[:, important_feature_indices]
+new_data1 ['SampleID'] = metabolic_merged_sheet['SampleID']
+new_data1 ['REF'] = metabolic_merged_sheet['REF']
+new_data1 ['Site'] = metabolic_merged_sheet['Site']
+new_data1 ['Description'] = metabolic_merged_sheet['Description']
+
+
+
+# Print the shape of the new data
+print("Shape of new data after filtering non-important features:", new_data1.shape)
+
+# Export new data to a CSV file
+new_data1.to_csv('important_features_data_ref.csv', index=False)
+
+new_data1
