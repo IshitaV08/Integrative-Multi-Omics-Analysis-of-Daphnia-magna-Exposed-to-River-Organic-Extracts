@@ -1,0 +1,359 @@
+import pandas as pd
+import seaborn as sns
+import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import SimpleImputer, IterativeImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
+from sklearn.model_selection import cross_val_score
+from scipy import stats
+from sklearn.cluster import AgglomerativeClustering
+from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from sklearn.cluster import KMeans
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+!pip install missingno
+
+import missingno as msno
+# Import necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Load sample information
+sample_sheet = pd.read_csv("sample_sheet.csv")
+
+# Load transcriptomic data (replace 'rna_norm_counts.csv' with your actual file)
+rna_data = pd.read_csv("rna_norm_counts.csv", index_col=0)
+# Transpose the 'rna_data' DataFrame
+rna_data_transposed = rna_data.T
+
+# Merge data based on sample names
+merged_data = pd.merge(sample_sheet, rna_data_transposed, left_on="SampleID", right_index=True)
+# Print the column names in merged_data
+print(merged_data.columns)
+# Load transcriptomic data (rna_norm_counts.csv) and transpose it
+rna_norm_counts_path = 'rna_norm_counts.csv'  # Replace with the actual path
+rna_data = pd.read_csv(rna_norm_counts_path, index_col=0).transpose()
+
+# Load sample sheet data
+sample_sheet_path = 'sample_sheet.csv'  # Replace with the actual path
+sample_sheet = pd.read_csv(sample_sheet_path)
+
+# Merge data based on sample names
+merged_data = pd.merge(sample_sheet, rna_data, left_on='SampleID', right_index=True)
+
+# Display the resulting DataFrame
+print(merged_data)
+merged_data.to_csv('merged_data.csv', index=False)
+
+df1 = pd.read_csv ('merged_data.csv')
+# Number of samples
+num_rows = len(df1)
+print(num_rows)
+# Identify the number of missing values
+missing_values = df1.isnull().sum()
+print(missing_values)
+# Generate sample data
+X1 = transcriptomic_merged_sheet_encoded.drop(columns=['REF_encoded','Site_encoded', 'SampleID'])
+y1 = transcriptomic_merged_sheet_encoded['REF_encoded']
+from sklearn.model_selection import train_test_split
+
+# Generate sample data
+X1 = transcriptomic_merged_sheet_encoded.drop(columns=['REF_encoded','Site_encoded', 'SampleID'])
+y1 = transcriptomic_merged_sheet_encoded['REF_encoded']
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X1, y1, test_size=0.2, random_state=42)
+from sklearn.preprocessing import StandardScaler
+
+# Scale the features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Train logistic regression with scaled data
+logistic_regression = LogisticRegression(max_iter=1000)
+logistic_regression.fit(X_train_scaled, y_train)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X1, y1, test_size=0.2, random_state=42)
+
+# Prepare the classifiers
+classifiers = {
+    "Logistic Regression": LogisticRegression(),
+    "Random Forest": RandomForestClassifier(random_state=42),
+    "Gradient Boosting": GradientBoostingClassifier(random_state=42),
+    "Support Vector Machine": SVC(probability=True, random_state=42)
+}
+
+# Train and evaluate the classifiers
+results = {}
+for name, clf in classifiers.items():
+    # Train the classifier
+    clf.fit(X_train, y_train)
+
+    # Predict on the test set
+    y_pred = clf.predict(X_test)
+    y_proba = clf.predict_proba(X_test)[:, 1]
+    
+    # Evaluate the classifier
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, average='weighted')  # For multiclass classification
+    recall = recall_score(y_test, y_pred, average='weighted')  # For multiclass classification
+    f1 = f1_score(y_test, y_pred, average='weighted')  # For multiclass classification
+    roc_auc = roc_auc_score(y_test, y_proba, average='weighted')  # For multiclass classification
+    cv_scores = cross_val_score(clf, X_train, y_train, cv=5)
+
+    # Store results
+    results[name] = {
+        "Accuracy": accuracy,
+        "Precision": precision,
+        "Recall": recall,
+        "F1 Score": f1,
+        "ROC-AUC Score": roc_auc,
+        "Cross-validation scores": cv_scores.tolist(),  # Convert to list for printing
+    }
+
+ # Print the performance
+    print(f"Results for {name}:")
+    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Precision: {precision:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
+    print(f"ROC-AUC Score: {roc_auc:.4f}\n")
+    print(f"Cross-validation scores: {cv_scores}\n")
+
+# Compare results
+results_df = pd.DataFrame(results).transpose()
+print("Comparison of Classifiers:")
+print(results_df)
+# Train the classifier
+clf = RandomForestClassifier(random_state=42)
+clf.fit(X_train, y_train)  # Replace X_train and y_train with your actual training data
+
+feature_importance = clf.feature_importances_
+important_features = X_train.columns[np.argsort(feature_importance)[::-1]]
+
+print("Most Important Feature:", important_features[0])
+
+# Exclude the best feature and retrain the classifier
+X_train_subset = X_train.drop(important_features[0], axis=1)
+X_test_subset = X_test.drop(important_features[0], axis=1)
+
+clf_subset = RandomForestClassifier(random_state=42)
+clf_subset.fit(X_train_subset, y_train)  # Replace X_train_subset and y_train with your actual data
+
+y_pred_test_subset = clf_subset.predict(X_test_subset)
+print("Test Accuracy (Excluding Best Feature):", accuracy_score(y_test, y_pred_test_subset))  # Replace y_test with your actual test data
+
+
+from sklearn.inspection import permutation_importance
+
+# Train SVM classifier
+clf = SVC(probability=True, random_state=42)
+clf.fit(X_train, y_train)
+
+# Compute permutation importances
+result = permutation_importance(clf, X_test, y_test, n_repeats=10, random_state=42)
+
+# Get feature importances
+importances = result.importances_mean
+
+# Get indices of features sorted by importance
+sorted_indices = np.argsort(importances)[::-1]
+
+# Print the most important feature
+most_important_feature = X_train.columns[sorted_indices[0]]
+print("Most Important Feature:", most_important_feature)
+# Train the classifier
+clf = LogisticRegression(max_iter=1000)
+clf.fit(X_train, y_train)
+
+# Get feature importances (coefficients for logistic regression)
+feature_importance = np.abs(clf.coef_[0])
+important_features = X_train.columns[np.argsort(feature_importance)[::-1]]
+
+print("Most Important Feature:", important_features[0])
+
+# Exclude the best feature and retrain the classifier
+X_train_subset = X_train.drop(important_features[0], axis=1)
+X_test_subset = X_test.drop(important_features[0], axis=1)
+
+clf_subset = LogisticRegression(max_iter=1000)
+clf_subset.fit(X_train_subset, y_train)
+
+y_pred_test_subset = clf_subset.predict(X_test_subset)
+print("Test Accuracy (Excluding Best Feature):", accuracy_score(y_test, y_pred_test_subset))
+# Train the classifier
+clf = GradientBoostingClassifier(random_state=42)
+clf.fit(X_train, y_train)  
+
+# Feature importance
+feature_importance = clf.feature_importances_
+important_features = X_train.columns[np.argsort(feature_importance)[::-1]]
+
+print("Most Important Feature:", important_features[0])
+
+# Exclude the best feature and retrain the classifier
+X_train_subset = X_train.drop(important_features[0], axis=1)
+X_test_subset = X_test.drop(important_features[0], axis=1)
+
+clf_subset = GradientBoostingClassifier(random_state=42)
+clf_subset.fit(X_train_subset, y_train)
+
+y_pred_test_subset = clf_subset.predict(X_test_subset)
+print("Test Accuracy (Excluding Best Feature):", accuracy_score(y_test, y_pred_test_subset))
+import matplotlib.pyplot as plt
+
+# Plotting accuracy
+plt.figure(figsize=(10, 6))
+results_df['Accuracy'].plot(kind='bar', color='skyblue')
+plt.title('Accuracy of Classifiers')
+plt.xlabel('Classifier')
+plt.ylabel('Accuracy')
+plt.xticks(rotation=45)
+plt.ylim(0, 1)
+plt.grid(axis='y')
+plt.tight_layout()
+plt.show()
+
+# Plotting cross-validation scores
+plt.figure(figsize=(10, 6))
+results_df['Cross-validation scores'].apply(lambda x: np.mean(x)).plot(kind='bar', color='lightgreen')
+plt.title('Mean Cross-validation Scores of Classifiers')
+plt.xlabel('Classifier')
+plt.ylabel('Mean Cross-validation Score')
+plt.xticks(rotation=45)
+plt.ylim(0, 1)
+plt.grid(axis='y')
+plt.tight_layout()
+plt.show()
+# Plotting ROC-AUC scores
+plt.figure(figsize=(10, 6))
+results_df['ROC-AUC Score'].plot(kind='bar', color='salmon')
+plt.title('ROC-AUC Scores of Classifiers')
+plt.xlabel('Classifier')
+plt.ylabel('ROC-AUC Score')
+plt.xticks(rotation=45)
+plt.ylim(0, 1)
+plt.grid(axis='y')
+plt.tight_layout()
+plt.show()
+import matplotlib.pyplot as plt
+
+# Get feature importance scores for all features
+feature_importance = clf.feature_importances_
+
+# Get the names of the features
+feature_names = X_train.columns
+
+# Sort the feature importance scores and feature names in descending order
+sorted_indices = np.argsort(feature_importance)[::-1]
+sorted_feature_importance = feature_importance[sorted_indices]
+sorted_feature_names = feature_names[sorted_indices]
+
+# Plotting
+plt.figure(figsize=(10, 6))
+plt.barh(range(len(sorted_feature_importance)), sorted_feature_importance, align='center')
+plt.yticks(range(len(sorted_feature_importance)), sorted_feature_names)
+plt.xlabel('Feature Importance')
+plt.title('Most Important Features')
+plt.gca().invert_yaxis()  # Invert y-axis to have the most important feature at the top
+plt.show()
+
+import matplotlib.pyplot as plt
+
+# Function to plot top N features based on their importance
+def plot_top_features(feature_importances, feature_names, model_name):
+    # Sort feature importances and feature names
+    sorted_indices = np.argsort(feature_importances)[::-1]
+    sorted_importances = feature_importances[sorted_indices][:20]
+    sorted_features = feature_names[sorted_indices][:20]
+
+    # Plot
+    plt.figure(figsize=(10, 6))
+    plt.barh(range(len(sorted_importances)), sorted_importances, align='center')
+    plt.yticks(range(len(sorted_importances)), sorted_features)
+    plt.xlabel('Feature Importance')
+    plt.title(f'Top 20 Features - {model_name}')
+    plt.gca().invert_yaxis()  # Invert y-axis to have the most important feature at the top
+    plt.show()
+
+# Plot top features for each model
+for name, result in results.items():
+    if name == "Support Vector Machine":
+        # SVM doesn't have direct feature importances, so skip plotting
+        continue
+    feature_importance = result["Feature Importance"]  # Assuming you've stored feature importances in your results
+    plot_top_features(feature_importance, X_train.columns, name)
+# 1. Data Preprocessing
+# Preprocess transcriptomic and metabolic datasets separately
+
+# 2. Integration of Data
+# Integrate transcriptomic and metabolic datasets into a single dataframe or array
+
+# 3. Train/Test Split
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 4. Model Selection
+from sklearn.ensemble import RandomForestRegressor  # Example: Random Forest Regressor
+model = RandomForestRegressor()
+
+# 5. Model Training
+model.fit(X_train, y_train)
+
+# 6. Model Evaluation
+from sklearn.metrics import mean_squared_error
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print("Mean Squared Error:", mse)
+
+# 7. Integration of Omics Data in Model
+# Ensure that both transcriptomic and metabolic features are used as inputs to the model
+
+# 8. Feature Selection/Dimensionality Reduction
+# Apply feature selection or dimensionality reduction techniques if necessary
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+
+# 1. Data Preprocessing
+
+# Load transcriptomic and metabolic datasets
+transcriptomic_data = pd.read_csv("merged_data.csv")
+metabolic_data = pd.read_csv("metabolomic_merged_df.csv")
+
+# Preprocess transcriptomic data
+# Drop non-numeric columns
+transcriptomic_data_numeric = transcriptomic_data.select_dtypes(include=['number'])
+
+# Handle missing values (imputation)
+imputer = SimpleImputer(strategy='mean')
+transcriptomic_data_imputed = imputer.fit_transform(transcriptomic_data_numeric)
+
+# Scale features
+scaler = StandardScaler()
+transcriptomic_data_scaled = scaler.fit_transform(transcriptomic_data_imputed)
+
+# Preprocess metabolic data
+# Drop non-numeric columns
+metabolic_data_numeric = metabolic_data.select_dtypes(include=['number'])
+
+# Handle missing values (imputation)
+imputer = SimpleImputer(strategy='mean')
+metabolic_data_imputed = imputer.fit_transform(metabolic_data_numeric)
+
+# Scale features
+scaler = StandardScaler()
+metabolic_data_scaled = scaler.fit_transform(metabolic_data_imputed)
+pd.DataFrame(metabolic_data_scaled)
+metabolic_data_scaled
