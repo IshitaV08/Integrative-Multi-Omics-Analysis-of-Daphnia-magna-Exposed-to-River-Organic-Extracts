@@ -1,0 +1,73 @@
+```{r}
+# Read the data
+data <- read.csv("rna_norm_counts.csv", header = TRUE)
+
+# Remove the first column (gene names)
+data <- data[,-1 ]
+
+
+# Calculate means for each gene
+means <- apply(data, 2, mean)
+
+# Perform t-tests for each gene against the first group (CK07)
+t_results <- lapply(data, function(x) t.test(x, data$CK07))
+
+# Extract p-values from t-test results
+p_values <- sapply(t_results, function(x) x$p.value)
+
+# Print results
+results <- data.frame(Gene = names(means), Mean = means, P_Value = p_values)
+print(results)
+
+
+# Boxplot of gene expression levels for each group
+boxplot(data, col = rainbow(ncol(data)), xlab = "Groups", ylab = "Gene Expression Level")
+
+# Add a legend
+legend("topright", legend = colnames(data), fill = rainbow(ncol(data)))
+
+# Add title
+title("Gene Expression Levels Across Groups")
+
+# Add horizontal line for CK07 mean expression
+abline(h = mean(data$CK07), col = "red", lty = 2)
+
+# Add significance asterisks for genes with p-values < 0.05
+significant_genes <- results$Gene[results$P_Value < 0.05]
+for (gene in significant_genes) {
+  y_value <- max(data[gene], na.rm = TRUE) + 50
+  points(which(colnames(data) == "CK07"), data[gene, "CK07"], col = "red", pch = 20)
+  text(which(colnames(data) == "CK07"), y_value, "*", col = "red", cex = 1.5)
+}
+
+library(ggplot2)
+
+# Create the scatter plot
+ggplot(results, aes(x = Gene, y = Mean, color = P_Value)) +
+  geom_point() +  # Plot points for each gene
+  labs(title = "Mean Expression vs. P-Value",
+       x = "Gene",
+       y = "Mean Expression",
+       color = "P-Value") +
+  scale_color_gradient(name = "P-Value", low = "darkred", high = "darkgreen") +  # Color scale for P-Value
+  theme_classic()
+
+ggplot(results, aes(x = Mean - mean(results$Mean), y = -log10(P_Value))) +
+  geom_point() +  # Plot points for each gene
+  labs(title = "Volcano Plot",
+       x = "Mean Difference from Overall Mean",
+       y = "-log10(P-Value)") +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +  # Significance threshold line
+  theme_classic()
+
+library(ggplot2)
+
+# Create the boxplot
+ggplot(results, aes(x = Gene, y = Mean)) +
+  geom_boxplot() +  # Create boxplots for each gene
+  labs(title = "Distribution of Mean Expression Across Genes",
+       x = "Gene",
+       y = "Mean Expression") +
+  theme_classic()
+```
+
